@@ -37,7 +37,7 @@ export function GuessResultRow({
 }) {
   const { guess, result } = gr;
   return (
-    <div style={{ display: "flex", flexShrink: 1 }}>
+    <div style={{ display: "flex", justifyContent: "center" }}>
       {result.map((r, index) => {
         let color: string | undefined = undefined;
         let border = DARK_GREY;
@@ -55,10 +55,10 @@ export function GuessResultRow({
             key={index}
             style={{
               height: 60,
-              width: 60,
+              minWidth: 25,
+              maxWidth: 60,
               display: "flex",
               justifyContent: "center",
-              flexShrink: 1,
               alignItems: "center",
               textAlign: "center",
               margin: 2,
@@ -66,7 +66,8 @@ export function GuessResultRow({
               background: color,
               fontWeight: "bold",
               fontSize: 32,
-              flex: "auto",
+              flexGrow: 1,
+              flex: 1,
             }}
             onClick={() => {
               if (r == "Correct") {
@@ -103,7 +104,7 @@ export function GuessResults({
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: "stretch",
         flex: "auto",
         justifyContent: "center",
         minHeight: "100%",
