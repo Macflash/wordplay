@@ -1,4 +1,5 @@
 import React from "react";
+import { useKeyDown } from "../common/hooks";
 import {
   DARK_GREY,
   GREEN,
@@ -9,6 +10,7 @@ import {
   Keyboard,
   TitleBar,
   GuessResults,
+  Dialog,
 } from "../common/ui";
 import {
   CreateGuessResult,
@@ -46,12 +48,6 @@ function createEmptyGuesses(guesses = 6, wordLength = 5) {
   return result;
 }
 
-var handleKeyFunction = (key: string) => {};
-
-window.addEventListener("keydown", (ev) => {
-  handleKeyFunction(ev.key);
-});
-
 function pickRandomWord(words: string[]): string {
   return words[Math.floor(Math.random() * words.length)];
 }
@@ -59,14 +55,18 @@ function pickRandomWord(words: string[]): string {
 function SimpleGame({
   words,
   word,
+  guessableWords = words,
   onComplete,
   isComplete,
+  didWin,
   allowedGuesses = 6,
 }: {
   words: string[];
+  guessableWords?: string[];
   word: string;
   onComplete: (won: boolean) => void;
   isComplete: boolean;
+  didWin: boolean;
   allowedGuesses?: number;
 }) {
   const wordLength = word.length;
@@ -76,64 +76,113 @@ function SimpleGame({
   );
   const currentGuess = guesses[currentGuessIndex]?.guess;
 
+  // RESET if the word or dictionary changes.
   React.useEffect(() => {
-    // if our words change, or our WORD changes, we should reset everything.
     setCurrentGuessIndex(0);
     setGuesses(createEmptyGuesses(allowedGuesses, wordLength));
   }, [words, word, allowedGuesses]);
 
-  function updateCurrentGuess(newGuess: string, result?: LetterResult[]) {
-    if (isComplete) return;
-    if (result) setCurrentGuessIndex(currentGuessIndex + 1);
-    if (!result) result = createEmptyResult(wordLength);
-    const newGuesses = [...guesses];
-    newGuesses[currentGuessIndex] = { guess: newGuess, result };
-    setGuesses(newGuesses);
-  }
+  const updateCurrentGuess = React.useCallback(
+    (newGuess: string, result?: LetterResult[]) => {
+      if (isComplete) return;
 
-  function handleKey(key: string) {
-    switch (key) {
-      case "ENTER":
-      case "Enter":
-        if (currentGuess.length == wordLength) {
-          if (currentGuess === word) {
-            onComplete(true);
-          } else if (!words.includes(currentGuess)) {
-            alert(
-              currentGuess.toUpperCase() + " was not found in our dictionary."
+      // only check win/lost if there is a result, since that means they hit enter.
+      if (result) {
+        if (newGuess == word) {
+          // you won! good job!
+          onComplete(true);
+        } else if (currentGuessIndex + 1 == allowedGuesses) {
+          // out of guesses dude, that means you lost :(
+          onComplete(false);
+        }
+      }
+
+      if (result) setCurrentGuessIndex(currentGuessIndex + 1);
+      if (!result) result = createEmptyResult(wordLength);
+      const newGuesses = [...guesses];
+      newGuesses[currentGuessIndex] = { guess: newGuess, result };
+      setGuesses(newGuesses);
+    },
+    [
+      isComplete,
+      setCurrentGuessIndex,
+      currentGuessIndex,
+      allowedGuesses,
+      guesses,
+      setGuesses,
+      word,
+      onComplete,
+    ]
+  );
+
+  const keyHandler = React.useCallback(
+    (key: string) => {
+      if (isComplete) return;
+      switch (key) {
+        case "ENTER":
+        case "Enter":
+          if (currentGuess.length == wordLength) {
+            // This is just to make sure that we can always guess right. even if there is a mismatch in the word lists.
+            if (
+              !guessableWords.includes(currentGuess) &&
+              currentGuess !== word
+            ) {
+              alert(
+                currentGuess.toUpperCase() + " was not found in our dictionary."
+              );
+              updateCurrentGuess("");
+              return;
+            }
+            const { guess, result } = CreateGuessResult(
+              currentGuess.toLowerCase(),
+              word
             );
-            updateCurrentGuess("");
+            updateCurrentGuess(guess, result);
+          }
+          break;
+        case "DELETE":
+        case "Backspace":
+          if (currentGuess.length > 0) {
+            updateCurrentGuess(
+              currentGuess.substring(0, currentGuess.length - 1)
+            );
+          }
+          break;
+        default:
+          if (key.length > 1 || !/^[a-z]+$/i.test(key)) {
             return;
           }
-          const { guess, result } = CreateGuessResult(
-            currentGuess.toLowerCase(),
-            word
-          );
-          updateCurrentGuess(guess, result);
-        }
-        break;
-      case "DELETE":
-      case "Backspace":
-        if (currentGuess.length > 0) {
-          updateCurrentGuess(
-            currentGuess.substring(0, currentGuess.length - 1)
-          );
-        }
-        break;
-      default:
-        if (key.length > 1 || !/^[a-z]+$/i.test(key)) {
-          return;
-        }
-        if (currentGuess.length < wordLength) {
-          updateCurrentGuess(currentGuess + key);
-        }
-    }
-  }
+          if (currentGuess.length < wordLength) {
+            updateCurrentGuess(currentGuess + key);
+          }
+      }
+    },
+    [
+      currentGuess,
+      wordLength,
+      guessableWords,
+      isComplete,
+      onComplete,
+      updateCurrentGuess,
+    ]
+  );
 
-  handleKeyFunction = handleKey;
+  useKeyDown(keyHandler);
 
   return (
     <>
+      {isComplete ? (
+        <Dialog>
+          {didWin ? (
+            <div>
+              You won! You guessed {word.toUpperCase()} in {currentGuessIndex}{" "}
+              {currentGuessIndex == 1 ? "guess" : "guesses"}.
+            </div>
+          ) : (
+            <div>You lost! The word was {word.toUpperCase()}.</div>
+          )}
+        </Dialog>
+      ) : null}
       <div
         style={{
           flex: "auto",
@@ -141,7 +190,7 @@ function SimpleGame({
         }}>
         <GuessResults guesses={guesses} />
       </div>
-      <Keyboard guesses={guesses} onKey={handleKey} />
+      <Keyboard guesses={guesses} onKey={keyHandler} />
     </>
   );
 }
@@ -157,16 +206,26 @@ export function Game() {
     () => wordify(dictionary, wordLength),
     [dictionary, wordLength]
   );
+  const guessableWords = React.useMemo(
+    () => wordify(all_words, wordLength),
+    [wordLength]
+  );
+
+  const [isComplete, setIsComplete] = React.useState(false);
+  const [didWin, setDidWin] = React.useState(false);
 
   const [wordSeed, setWordSeed] = React.useState(0);
   const word = React.useMemo(() => pickRandomWord(words), [words, wordSeed]);
-  const pickNewWord = React.useCallback(
-    () => setWordSeed(Math.random()),
-    [setWordSeed]
-  );
+  const pickNewWord = React.useCallback(() => {
+    setIsComplete(false);
+    setDidWin(false);
+    setWordSeed(Math.random());
+    document.getElementById("keyboard_ENTER")?.focus();
+  }, [setWordSeed]);
 
   return (
     <div
+      id='gamediv'
       className='App'
       style={{
         background: "black",
@@ -177,97 +236,101 @@ export function Game() {
         alignItems: "stretch",
         userSelect: "none",
       }}>
+      <button
+        style={{
+          position: "absolute",
+          top: 10,
+          left: 20,
+          cursor: "pointer",
+          zIndex: 1000,
+          padding: "5px 15px",
+          color: WHITE,
+          fontWeight: "bold",
+          fontSize: 16,
+          fontKerning: "auto",
+          border: "none",
+          background: LIGHT_GREY,
+          borderRadius: 4,
+        }}
+        onClick={(ev) => {
+          pickNewWord();
+        }}>
+        New word
+      </button>
       {showSettings ? (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,.6)",
-          }}>
-          <div
-            style={{
-              background: DARK_GREY,
-              padding: "40px 20px",
-            }}>
-            <div>
-              <label>
-                <input
-                  type='checkbox'
-                  checked={dictionary == all_words}
-                  onChange={(ev) => {
-                    if (ev.target.checked) {
-                      setDictionary(all_words);
-                    } else {
-                      setDictionary(common_words);
-                    }
-                  }}
-                />{" "}
-                Use extended dictionary
-              </label>
-            </div>
-
-            <div>
-              <label>
-                <input
-                  type='number'
-                  value={wordLength}
-                  onChange={(ev) => {
-                    const value = Number.parseInt(ev.target.value);
-                    if (value > 1) {
-                      // check if there are enough playable words
-                      if (wordify(dictionary, value).length > 2000) {
-                        setWordLength(value);
-                      }
-                    }
-                  }}
-                />{" "}
-                Word length
-              </label>
-            </div>
-
-            <div>Playable words: {words.length}</div>
-
-            <div>
-              <label>
-                <input
-                  type='number'
-                  value={allowedGuesses}
-                  onChange={(ev) => {
-                    const value = Number.parseInt(ev.target.value);
-                    if (value > 1 && value <= 15) {
-                      setAllowedGuesses(value);
-                    }
-                  }}
-                />{" "}
-                Guesses
-              </label>
-            </div>
-
-            <div>Difficulty: Medium</div>
-
-            <button
-              style={{
-                fontSize: 24,
-                color: WHITE,
-                background: LIGHT_GREY,
-                border: "none",
-                borderRadius: 8,
-                padding: "5px 15px",
-                margin: 5,
-              }}
-              onClick={() => {
-                setShowSettings(false);
-              }}>
-              Save
-            </button>
+        <Dialog>
+          <div>
+            <label>
+              <input
+                type='checkbox'
+                checked={dictionary == all_words}
+                onChange={(ev) => {
+                  if (ev.target.checked) {
+                    setDictionary(all_words);
+                  } else {
+                    setDictionary(common_words);
+                  }
+                }}
+              />{" "}
+              Use extended dictionary
+            </label>
           </div>
-        </div>
+
+          <div>
+            <label>
+              <input
+                type='number'
+                value={wordLength}
+                onChange={(ev) => {
+                  const value = Number.parseInt(ev.target.value);
+                  if (value > 1) {
+                    // check if there are enough playable words
+                    if (wordify(dictionary, value).length > 2000) {
+                      setWordLength(value);
+                    }
+                  }
+                }}
+              />{" "}
+              Word length
+            </label>
+          </div>
+
+          <div>Playable words: {words.length}</div>
+
+          <div>
+            <label>
+              <input
+                type='number'
+                value={allowedGuesses}
+                onChange={(ev) => {
+                  const value = Number.parseInt(ev.target.value);
+                  if (value > 1 && value <= 15) {
+                    setAllowedGuesses(value);
+                  }
+                }}
+              />{" "}
+              Guesses
+            </label>
+          </div>
+
+          <div>Difficulty: Medium</div>
+
+          <button
+            style={{
+              fontSize: 24,
+              color: WHITE,
+              background: LIGHT_GREY,
+              border: "none",
+              borderRadius: 8,
+              padding: "5px 15px",
+              margin: 5,
+            }}
+            onClick={() => {
+              setShowSettings(false);
+            }}>
+            Save
+          </button>
+        </Dialog>
       ) : (
         <button
           style={{
@@ -291,35 +354,17 @@ export function Game() {
           Customize
         </button>
       )}
-      <button
-        style={{
-          position: "absolute",
-          top: 10,
-          left: 20,
-          cursor: "pointer",
-          zIndex: 1000,
-          padding: "5px 15px",
-          color: WHITE,
-          fontWeight: "bold",
-          fontSize: 16,
-          fontKerning: "auto",
-          border: "none",
-          background: LIGHT_GREY,
-          borderRadius: 4,
-        }}
-        onClick={() => {
-          pickNewWord();
-        }}>
-        New word
-      </button>
       <TitleBar title='FIND THE WORD' />
       <SimpleGame
         word={word}
         words={words}
+        guessableWords={guessableWords}
         allowedGuesses={allowedGuesses}
-        isComplete={false}
+        isComplete={isComplete}
+        didWin={didWin}
         onComplete={(didWin) => {
-          // todo: handle this!
+          setIsComplete(true);
+          setDidWin(didWin);
         }}
       />
     </div>

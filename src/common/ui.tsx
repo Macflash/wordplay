@@ -1,3 +1,4 @@
+import React from "react";
 import {
   GuessResult,
   getDeadLetters,
@@ -105,7 +106,7 @@ export function GuessResults({
         alignItems: "center",
         flex: "auto",
         justifyContent: "center",
-        height: "100%",
+        minHeight: "100%",
       }}>
       {guesses.map((gr, index) => (
         <GuessResultRow
@@ -167,10 +168,13 @@ export function Keyboard({
               };
             }
             return (
-              <div
+              <button
+                id={isSpecialKey ? `keyboard_${key}` : undefined}
                 onClick={() => onKey(key)}
                 key={key}
                 style={{
+                  color: WHITE,
+                  border: "none",
                   background: color,
                   margin: 6,
                   padding: "20px 5px",
@@ -186,7 +190,7 @@ export function Keyboard({
                   ...extras,
                 }}>
                 {key.toUpperCase()}
-              </div>
+              </button>
             );
           })}
         </div>
@@ -194,3 +198,28 @@ export function Keyboard({
     </div>
   );
 }
+
+export const Dialog: React.FC = ({ children }) => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(0,0,0,.6)",
+      }}>
+      <div
+        style={{
+          background: DARK_GREY,
+          padding: "40px 20px",
+        }}>
+        {children}
+      </div>
+    </div>
+  );
+};
