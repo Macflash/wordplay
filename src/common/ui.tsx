@@ -37,7 +37,14 @@ export function GuessResultRow({
 }) {
   const { guess, result } = gr;
   return (
-    <div style={{ display: "flex", justifyContent: "center" }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        flexShrink: 1,
+        flexGrow: 1,
+        maxHeight: 65,
+      }}>
       {result.map((r, index) => {
         let color: string | undefined = undefined;
         let border = DARK_GREY;
@@ -54,7 +61,8 @@ export function GuessResultRow({
           <div
             key={index}
             style={{
-              height: 60,
+              minHeight: 40,
+              maxHeight: 60,
               minWidth: 25,
               maxWidth: 60,
               display: "flex",
@@ -177,7 +185,7 @@ export function Keyboard({
                   color: WHITE,
                   border: "none",
                   background: color,
-                  margin: 6,
+                  margin: 2,
                   padding: "20px 5px",
                   borderRadius: 4,
                   fontWeight: "bold",
