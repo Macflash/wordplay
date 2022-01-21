@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/wordplay/static/css/main.339a5e1f.css",
-    "main.js": "/wordplay/static/js/main.2989135e.js",
+    "main.css": "/wordplay/static/css/main.94954e6d.css",
+    "main.js": "/wordplay/static/js/main.52e51cf3.js",
     "static/js/787.b029801a.chunk.js": "/wordplay/static/js/787.b029801a.chunk.js",
     "index.html": "/wordplay/index.html",
-    "main.339a5e1f.css.map": "/wordplay/static/css/main.339a5e1f.css.map",
-    "main.2989135e.js.map": "/wordplay/static/js/main.2989135e.js.map",
+    "main.94954e6d.css.map": "/wordplay/static/css/main.94954e6d.css.map",
+    "main.52e51cf3.js.map": "/wordplay/static/js/main.52e51cf3.js.map",
     "787.b029801a.chunk.js.map": "/wordplay/static/js/787.b029801a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.339a5e1f.css",
-    "static/js/main.2989135e.js"
+    "static/css/main.94954e6d.css",
+    "static/js/main.52e51cf3.js"
   ]
 }
