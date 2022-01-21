@@ -1,56 +1,26 @@
 import React from "react";
 import { useKeyDown } from "../common/hooks";
 import {
-  DARK_GREY,
-  GREEN,
-  YELLOW,
   LIGHT_GREY,
   WHITE,
-  GuessResultRow,
   Keyboard,
   TitleBar,
   GuessResults,
   Dialog,
+  AbsolutePositionButton,
 } from "../common/ui";
 import {
+  createEmptyGuesses,
+  createEmptyResult,
   CreateGuessResult,
-  getDeadLetters,
-  getGreenLetters,
-  getYellowLetters,
   GuessResult,
   LetterResult,
+  pickRandomWord,
   wordify,
 } from "../common/utils";
 
 import { all_words } from "../wordlists/all_words";
 import { common_words } from "../wordlists/common_words";
-
-function createEmptyResult(length = 5) {
-  let result: LetterResult[] = [];
-  for (let i = 0; i < length; i++) {
-    result.push("NotGuessed");
-  }
-  return result;
-}
-
-function createEmptyGuess(length = 5) {
-  return {
-    guess: "",
-    result: createEmptyResult(length),
-  };
-}
-
-function createEmptyGuesses(guesses = 6, wordLength = 5) {
-  let result: GuessResult[] = [];
-  for (let i = 0; i < guesses; i++) {
-    result.push(createEmptyGuess(wordLength));
-  }
-  return result;
-}
-
-function pickRandomWord(words: string[]): string {
-  return words[Math.floor(Math.random() * words.length)];
-}
 
 function SimpleGame({
   words,
@@ -236,27 +206,13 @@ export function Game() {
         alignItems: "stretch",
         userSelect: "none",
       }}>
-      <button
-        style={{
-          position: "absolute",
-          top: 10,
-          left: 20,
-          cursor: "pointer",
-          zIndex: 1000,
-          padding: "5px 15px",
-          color: WHITE,
-          fontWeight: "bold",
-          fontSize: 16,
-          fontKerning: "auto",
-          border: "none",
-          background: LIGHT_GREY,
-          borderRadius: 4,
-        }}
-        onClick={(ev) => {
+      <AbsolutePositionButton
+        right={150}
+        text='New word'
+        onClick={() => {
           pickNewWord();
-        }}>
-        New word
-      </button>
+        }}
+      />
       {showSettings ? (
         <Dialog>
           <div>
@@ -332,27 +288,13 @@ export function Game() {
           </button>
         </Dialog>
       ) : (
-        <button
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 20,
-            cursor: "pointer",
-            zIndex: 1000,
-            padding: "5px 15px",
-            color: WHITE,
-            fontWeight: "bold",
-            fontSize: 16,
-            fontKerning: "auto",
-            border: "none",
-            background: LIGHT_GREY,
-            borderRadius: 4,
-          }}
+        <AbsolutePositionButton
+          right={20}
+          text='Customize'
           onClick={() => {
             setShowSettings(true);
-          }}>
-          Customize
-        </button>
+          }}
+        />
       )}
       <TitleBar title='FIND THE WORD' />
       <SimpleGame

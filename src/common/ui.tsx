@@ -12,6 +12,43 @@ export const GREEN = "rgb(83, 141, 78)";
 export const DARK_GREY = "rgb(58, 58, 60)";
 export const LIGHT_GREY = "rgb(129, 131, 132)";
 
+export function AbsolutePositionButton({
+  onClick,
+  text,
+  right,
+  left,
+}: {
+  onClick: () => void;
+  text: string;
+  right?: number;
+  left?: number;
+}) {
+  return (
+    <button
+      style={{
+        position: "absolute",
+        top: 10,
+        right,
+        left,
+        cursor: "pointer",
+        zIndex: 1000,
+        padding: "5px 15px",
+        color: WHITE,
+        fontWeight: "bold",
+        fontSize: 16,
+        fontKerning: "auto",
+        border: "none",
+        background: LIGHT_GREY,
+        borderRadius: 4,
+      }}
+      onClick={onClick}>
+      {text}
+    </button>
+  );
+}
+
+export var navigate: (gameMode: string) => void;
+
 export function TitleBar({ title }: { title: string }) {
   return (
     <div
@@ -157,6 +194,7 @@ export function Keyboard({
     <div>
       {keys.map((row, rowKey) => (
         <div key={rowKey} style={{ display: "flex", justifyContent: "center" }}>
+          {rowKey === 1 ? <div style={{ flex: 0.5 }}></div> : null}
           {row.map((key) => {
             let color = LIGHT_GREY;
             if (deadLetters.has(key)) color = DARK_GREY;
@@ -185,12 +223,12 @@ export function Keyboard({
                   color: WHITE,
                   border: "none",
                   background: color,
-                  margin: 2,
+                  margin: 3,
                   padding: "20px 5px",
                   borderRadius: 4,
                   fontWeight: "bold",
                   cursor: "pointer",
-                  maxWidth: 25,
+                  maxWidth: 45,
                   flex: "auto",
                   justifyContent: "center",
                   textAlign: "center",
@@ -202,6 +240,7 @@ export function Keyboard({
               </button>
             );
           })}
+          {rowKey === 1 ? <div style={{ flex: 0.5 }}></div> : null}
         </div>
       ))}
     </div>
