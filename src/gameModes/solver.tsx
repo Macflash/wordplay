@@ -194,9 +194,18 @@ export function Solver() {
   );
 
   // Add option to select which words to use!
-  let remainingWords = TrimDictionary(common_wordles, guesses);
+  let remainingWords = React.useMemo(() => {
+    const rw = TrimDictionary(common_wordles, guesses);
+    if (rw.length < 25) {
+      return TrimDictionary(all_valid_wordle_guesses, guesses);
+    }
+    return rw;
+  }, [guesses]);
 
-  const letterFrequencies = getLetterFrequencies(remainingWords);
+  const letterFrequencies = React.useMemo(
+    () => getLetterFrequencies(remainingWords),
+    [remainingWords]
+  );
 
   const fastGuess = React.useMemo(
     () => MakeAGuess(all_valid_wordle_guesses, guesses),
@@ -284,7 +293,7 @@ export function Solver() {
         <button
           disabled={isGuessing}
           onClick={() => {
-            if (topGuesses.length) {
+            if (topGuesses.length || remainingWords.length < 5) {
               // Guesses with WAY more words.
               startGuessing(TrimDictionary(all_valid_wordle_guesses, guesses));
               return;
@@ -293,7 +302,7 @@ export function Solver() {
           }}>
           {isGuessing
             ? `Calculating (${guessPercent}%)`
-            : topGuesses.length > 0
+            : topGuesses.length > 0 || remainingWords.length < 5
             ? "Try more words (this could take longer)"
             : "Calculate (this will take a sec)"}
         </button>
