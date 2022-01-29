@@ -21,6 +21,7 @@ import {
 
 import { all_words } from "../wordlists/all_words";
 import { common_words } from "../wordlists/common_words";
+import { wordle_answers, wordle_guesses } from "../wordlists/wordle_list";
 
 function SimpleGame({
   words,
@@ -170,16 +171,19 @@ export function Game() {
 
   const [allowedGuesses, setAllowedGuesses] = React.useState(6);
 
-  const [dictionary, setDictionary] = React.useState(common_words);
-  const [wordLength, setWordLength] = React.useState(5);
-  const words = React.useMemo(
-    () => wordify(dictionary, wordLength),
-    [dictionary, wordLength]
-  );
-  const guessableWords = React.useMemo(
-    () => wordify(all_words, wordLength),
-    [wordLength]
-  );
+  const wordLength = 5;
+  const words = wordle_answers;
+  const guessableWords = [...wordle_answers, ...wordle_guesses];
+  // const [dictionary, setDictionary] = React.useState(common_words);
+  // const [wordLength, setWordLength] = React.useState(5);
+  // const words = React.useMemo(
+  //   () => wordify(dictionary, wordLength),
+  //   [dictionary, wordLength]
+  // );
+  // const guessableWords = React.useMemo(
+  //   () => wordify(all_words, wordLength),
+  //   [wordLength]
+  // );
 
   const [isComplete, setIsComplete] = React.useState(false);
   const [didWin, setDidWin] = React.useState(false);
@@ -215,7 +219,7 @@ export function Game() {
       />
       {showSettings ? (
         <Dialog>
-          <div>
+          {/* <div>
             <label>
               <input
                 type='checkbox'
@@ -230,9 +234,9 @@ export function Game() {
               />{" "}
               Use extended dictionary
             </label>
-          </div>
+          </div> */}
 
-          <div>
+          {/* <div>
             <label>
               <input
                 type='number'
@@ -249,7 +253,7 @@ export function Game() {
               />{" "}
               Word length
             </label>
-          </div>
+          </div> */}
 
           <div>Playable words: {words.length}</div>
 

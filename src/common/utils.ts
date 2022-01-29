@@ -69,15 +69,37 @@ export function getLetters(word: string) {
 
 export function CreateGuessResult(guess: string, word: string): GuessResult {
   const result: LetterResult[] = [];
-  const letters = getLetters(word);
+  const wordLetters = countLetters(word);
+
+  // we only do total # of matched UP to the number in the word.
+  const matchedSoFar = new Map<string, number>();
+
+  // Do greens first
+  for (let i = 0; i < guess.length; i++) {
+    const char = guess[i];
+    if (char === word[i]) {
+      result[i] = "Correct";
+      matchedSoFar.set(char, 1 + Or0(matchedSoFar.get(char)));
+    }
+  }
+
+  console.log(matchedSoFar);
+  debugger;
 
   for (let i = 0; i < guess.length; i++) {
-    if (guess[i] == word[i]) {
-      result.push("Correct");
-    } else if (letters.has(guess[i])) {
-      result.push("WrongLocation");
+    const char = guess[i];
+    if (char == word[i]) {
+      // already did green.
+      continue;
+    } else if (
+      wordLetters.has(char) &&
+      Or0(matchedSoFar.get(char)) < wordLetters.get(char)!
+    ) {
+      matchedSoFar.set(char, 1 + Or0(matchedSoFar.get(char)));
+      // need to factor in the NUMBER so far and increment it as we go.
+      result[i] = "WrongLocation";
     } else {
-      result.push("WrongLetter");
+      result[i] = "WrongLetter";
     }
   }
 
