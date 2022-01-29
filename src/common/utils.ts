@@ -162,12 +162,16 @@ function getMaxLetters(guessResult: GuessResult): Map<string, number> {
   return maxCounts;
 }
 
-// this doesn't handle yellow + green combinations right
+// this doesn't handle NOT GUESSED!
 export function TrimDictionary(
   words: string[],
   guesses: GuessResult[]
 ): string[] {
   for (const guess of guesses) {
+    // SKIP ANYTHING WITH NOT GUESSED IN IT!
+    if (guess.result.includes("NotGuessed")) {
+      continue;
+    }
     const maxLetters = getMaxLetters(guess);
     const matchedLetters = countMatchedLetters(guess); // we are doing this twice, a little inefficient
     words = words.filter((word) => {

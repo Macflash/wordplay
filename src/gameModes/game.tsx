@@ -257,7 +257,7 @@ export function Game() {
                   setIsHardMode(checked);
                 }}
               />{" "}
-              Hard mode (guesses must match clues)
+              Hard mode (guesses must use all clues)
             </label>
           </div>
 
@@ -386,6 +386,7 @@ export function Game() {
         words={answerWords}
         guessableWords={guessableWords}
         allowedGuesses={allowedGuesses}
+        isHardMode={isHardMode}
         isComplete={isComplete}
         didWin={didWin}
         onComplete={(didWin) => {
