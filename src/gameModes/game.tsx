@@ -16,6 +16,7 @@ import {
   GuessResult,
   LetterResult,
   pickRandomWord,
+  TrimDictionary,
 } from "../common/utils";
 import {
   combineWordLists,
@@ -31,6 +32,7 @@ function SimpleGame({
   isComplete,
   didWin,
   allowedGuesses = 6,
+  isHardMode = false,
 }: {
   words: string[];
   guessableWords?: string[];
@@ -39,6 +41,7 @@ function SimpleGame({
   isComplete: boolean;
   didWin: boolean;
   allowedGuesses?: number;
+  isHardMode?: boolean;
 }) {
   const wordLength = word.length;
   const [currentGuessIndex, setCurrentGuessIndex] = React.useState(0);
@@ -93,6 +96,7 @@ function SimpleGame({
         case "ENTER":
         case "Enter":
           if (currentGuess.length == wordLength) {
+            // TODO add hard mode!
             // This is just to make sure that we can always guess right. even if there is a mismatch in the word lists.
             if (
               !guessableWords.includes(currentGuess) &&
@@ -103,6 +107,19 @@ function SimpleGame({
               );
               updateCurrentGuess("");
               return;
+            }
+            // in hard more the guesses have to be VALID possible winning words, E.G. in the TRIMMED dictionary
+            if (isHardMode) {
+              const validGuesses = TrimDictionary(guessableWords, guesses);
+              if (!validGuesses.includes(currentGuess)) {
+                alert(
+                  "Hard mode: " +
+                    currentGuess.toUpperCase() +
+                    " does not use all the clues given."
+                );
+                updateCurrentGuess("");
+                return;
+              }
             }
             const { guess, result } = CreateGuessResult(
               currentGuess.toLowerCase(),
@@ -169,6 +186,7 @@ function SimpleGame({
 export function Game() {
   const [showSettings, setShowSettings] = React.useState(false);
 
+  const [isHardMode, setIsHardMode] = React.useState(false);
   const [allowedGuesses, setAllowedGuesses] = React.useState(6);
 
   // const wordLength = 5;
@@ -231,8 +249,23 @@ export function Game() {
         <Dialog>
           <div>
             <label>
+              <input
+                type='checkbox'
+                checked={isHardMode}
+                onChange={(ev) => {
+                  const { checked } = ev.target;
+                  setIsHardMode(checked);
+                }}
+              />{" "}
+              Hard mode (guesses must match clues)
+            </label>
+          </div>
+
+          <div>
+            <label>
               Answer dictionary:{" "}
               <select
+                value={answerDictionary}
                 onChange={(ev) => {
                   const dictionary = ev.target.value as Dictionary;
                   if (dictionary) {
@@ -246,6 +279,7 @@ export function Game() {
                   }
                 }}>
                 <option value='wordle_answers'>Wordle Answers</option>
+                <option value='wordle_guessable'>Wordle Guesses</option>
                 <option value='medium'>Medium Dictionary</option>
                 <option value='huge'>Huge Dictionary</option>
               </select>
@@ -254,6 +288,7 @@ export function Game() {
             <label>
               Additional allowed guesses:{" "}
               <select
+                value={guessableDictionary}
                 onChange={(ev) => {
                   const dictionary = ev.target.value as Dictionary;
                   if (dictionary) {
@@ -266,8 +301,8 @@ export function Game() {
                     setGuessableDictionary(ev.target.value as Dictionary);
                   }
                 }}>
-                <option value='wordle_guessable'>Wordle Guesses</option>
                 <option value='wordle_answers'>Wordle Answers</option>
+                <option value='wordle_guessable'>Wordle Guesses</option>
                 <option value='medium'>Medium Dictionary</option>
                 <option value='huge'>Huge Dictionary</option>
               </select>

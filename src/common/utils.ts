@@ -76,9 +76,6 @@ export function CreateGuessResult(guess: string, word: string): GuessResult {
     }
   }
 
-  console.log(matchedSoFar);
-  debugger;
-
   for (let i = 0; i < guess.length; i++) {
     const char = guess[i];
     if (char == word[i]) {
