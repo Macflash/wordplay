@@ -1,22 +1,13 @@
 import React from "react";
-import { GuessResultRow, GuessResults } from "../common/ui";
+import { GuessResults } from "../common/ui";
 import {
   createEmptyGuesses,
   CreateGuessResult,
-  getDeadLetters,
-  getLetters,
-  getYellowLetters,
   GuessResult,
   TrimDictionary,
   wordify,
 } from "../common/utils";
-
-import { all_words } from "../wordlists/all_words";
-import { common_words } from "../wordlists/common_words";
-
-const common_wordles = wordify(common_words);
-
-const all_valid_wordle_guesses = wordify(all_words);
+import { wordle_guesses, wordle_answers } from "../wordlists/wordle_list";
 
 // count frequency of each letter in each spot
 // This could be... large
@@ -114,7 +105,7 @@ function MakeAGuess(words: string[], pastGuesses: GuessResult[]): string {
 
 var isGameGuessing = false;
 var stopGuessing: () => void;
-var setTopWords: (words: string[]) => void;
+var setTopWords: (words: string[], percent: number) => void;
 var setPercent: (number: number) => void;
 
 interface WordResult {
@@ -136,7 +127,7 @@ function AutomaticGuessing(
   }
   if (remainingWords.length <= top) {
     console.log("all words are good i guess");
-    setTopWords(remainingWords);
+    setTopWords(remainingWords, 1);
     isGameGuessing = false;
     stopGuessing();
     return;
@@ -147,7 +138,8 @@ function AutomaticGuessing(
     return;
   }
 
-  setPercent(Math.floor((1000 * currentIndex) / remainingWords.length) / 10);
+  const percent =
+    Math.floor((1000 * currentIndex) / remainingWords.length) / 10;
 
   const guess = remainingWords[currentIndex];
 
@@ -175,7 +167,10 @@ function AutomaticGuessing(
   currentTopGuesses.push(result);
   currentTopGuesses.sort((a, b) => a.score - b.score);
 
-  setTopWords(currentTopGuesses.slice(0, top).map((r) => r.guess));
+  setTopWords(
+    currentTopGuesses.slice(0, top).map((r) => r.guess),
+    percent
+  );
   setTimeout(() => {
     AutomaticGuessing(
       remainingWords,
@@ -194,21 +189,21 @@ export function Solver() {
   );
 
   // Add option to select which words to use!
-  let remainingWords = React.useMemo(() => {
-    const rw = TrimDictionary(common_wordles, guesses);
-    if (rw.length < 25) {
-      return TrimDictionary(all_valid_wordle_guesses, guesses);
-    }
-    return rw;
+  let remainingAnswers = React.useMemo(() => {
+    return TrimDictionary(wordle_answers, guesses);
+  }, [guesses]);
+
+  let remainingGuesses = React.useMemo(() => {
+    return TrimDictionary(wordle_guesses, guesses);
   }, [guesses]);
 
   const letterFrequencies = React.useMemo(
-    () => getLetterFrequencies(remainingWords),
-    [remainingWords]
+    () => getLetterFrequencies(remainingAnswers),
+    [remainingAnswers]
   );
 
   const fastGuess = React.useMemo(
-    () => MakeAGuess(all_valid_wordle_guesses, guesses),
+    () => MakeAGuess(remainingAnswers, guesses),
     [guesses]
   );
 
@@ -223,9 +218,9 @@ export function Solver() {
     setIsGuessing(false);
   }, [setIsGuessing]);
   setTopWords = React.useCallback(
-    (words: string[]) => {
+    (words: string[], percent: number) => {
       setTopGuesses(words);
-      setGuessPercent(0);
+      setGuessPercent(percent);
     },
     [topGuesses, setTopGuesses]
   );
@@ -288,22 +283,23 @@ export function Solver() {
           </div>
         ))}
       </div>
-      <div>{remainingWords.length} words remaining</div>
+      <div>{remainingAnswers.length} answers remaining</div>
+      <div>{remainingGuesses.length} guesses remaining</div>
       <div>
         <button
           disabled={isGuessing}
           onClick={() => {
-            if (topGuesses.length || remainingWords.length < 5) {
+            if (topGuesses.length) {
               // Guesses with WAY more words.
-              startGuessing(TrimDictionary(all_valid_wordle_guesses, guesses));
+              startGuessing(remainingAnswers);
               return;
             }
-            startGuessing(remainingWords);
+            startGuessing(remainingGuesses);
           }}>
           {isGuessing
             ? `Calculating (${guessPercent}%)`
-            : topGuesses.length > 0 || remainingWords.length < 5
-            ? "Try more words (this could take longer)"
+            : topGuesses.length > 0
+            ? "Try with all valid wordle guesses, not just answers (this could take longer)"
             : "Calculate (this will take a sec)"}
         </button>
         {isGuessing ? (
