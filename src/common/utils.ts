@@ -1,10 +1,3 @@
-export function wordify(dictionary: string, length = 5) {
-  return dictionary
-    .split("\n")
-    .map((word) => word.trim().toLowerCase())
-    .filter((word) => word.length === length);
-}
-
 export function getLetter(c: number) {
   const offset = "a".charCodeAt(0);
   return String.fromCharCode(c + offset);

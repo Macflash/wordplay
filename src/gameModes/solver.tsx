@@ -5,7 +5,6 @@ import {
   CreateGuessResult,
   GuessResult,
   TrimDictionary,
-  wordify,
 } from "../common/utils";
 import { wordle_guesses, wordle_answers } from "../wordlists/wordle_list";
 

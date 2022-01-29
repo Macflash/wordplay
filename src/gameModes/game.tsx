@@ -16,12 +16,12 @@ import {
   GuessResult,
   LetterResult,
   pickRandomWord,
-  wordify,
 } from "../common/utils";
-
-import { all_words } from "../wordlists/all_words";
-import { common_words } from "../wordlists/common_words";
-import { wordle_answers, wordle_guesses } from "../wordlists/wordle_list";
+import {
+  combineWordLists,
+  CreateDictionary,
+  Dictionary,
+} from "../common/words";
 
 function SimpleGame({
   words,
@@ -171,25 +171,35 @@ export function Game() {
 
   const [allowedGuesses, setAllowedGuesses] = React.useState(6);
 
-  const wordLength = 5;
-  const words = wordle_answers;
-  const guessableWords = [...wordle_answers, ...wordle_guesses];
-  // const [dictionary, setDictionary] = React.useState(common_words);
-  // const [wordLength, setWordLength] = React.useState(5);
-  // const words = React.useMemo(
-  //   () => wordify(dictionary, wordLength),
-  //   [dictionary, wordLength]
-  // );
-  // const guessableWords = React.useMemo(
-  //   () => wordify(all_words, wordLength),
-  //   [wordLength]
-  // );
+  // const wordLength = 5;
+  // const words = wordle_answers;
+  // const guessableWords = [...wordle_answers, ...wordle_guesses];
+  const [answerDictionary, setAnswerDictionary] =
+    React.useState<Dictionary>("wordle_answers");
+  const [guessableDictionary, setGuessableDictionary] =
+    React.useState<Dictionary>("wordle_guessable");
+  const [wordLength, setWordLength] = React.useState(5);
+  const answerWords = React.useMemo(
+    () => CreateDictionary(answerDictionary, wordLength),
+    [answerDictionary, wordLength]
+  );
+  const guessableWords = React.useMemo(
+    () =>
+      combineWordLists(
+        CreateDictionary(guessableDictionary, wordLength),
+        answerWords
+      ),
+    [answerWords, guessableDictionary, wordLength]
+  );
 
   const [isComplete, setIsComplete] = React.useState(false);
   const [didWin, setDidWin] = React.useState(false);
 
   const [wordSeed, setWordSeed] = React.useState(0);
-  const word = React.useMemo(() => pickRandomWord(words), [words, wordSeed]);
+  const answer = React.useMemo(
+    () => pickRandomWord(answerWords),
+    [answerWords, wordSeed]
+  );
   const pickNewWord = React.useCallback(() => {
     setIsComplete(false);
     setDidWin(false);
@@ -219,25 +229,54 @@ export function Game() {
       />
       {showSettings ? (
         <Dialog>
-          {/* <div>
+          <div>
             <label>
-              <input
-                type='checkbox'
-                checked={dictionary == all_words}
+              Answer dictionary:{" "}
+              <select
                 onChange={(ev) => {
-                  if (ev.target.checked) {
-                    setDictionary(all_words);
-                  } else {
-                    setDictionary(common_words);
+                  const dictionary = ev.target.value as Dictionary;
+                  if (dictionary) {
+                    if (
+                      dictionary === "wordle_answers" ||
+                      dictionary === "wordle_guessable"
+                    ) {
+                      setWordLength(5);
+                    }
+                    setAnswerDictionary(ev.target.value as Dictionary);
                   }
-                }}
-              />{" "}
-              Use extended dictionary
+                }}>
+                <option value='wordle_answers'>Wordle Answers</option>
+                <option value='medium'>Medium Dictionary</option>
+                <option value='huge'>Huge Dictionary</option>
+              </select>
             </label>
-          </div> */}
-
-          {/* <div>
+            <br />
             <label>
+              Additional allowed guesses:{" "}
+              <select
+                onChange={(ev) => {
+                  const dictionary = ev.target.value as Dictionary;
+                  if (dictionary) {
+                    if (
+                      dictionary === "wordle_answers" ||
+                      dictionary === "wordle_guessable"
+                    ) {
+                      setWordLength(5);
+                    }
+                    setGuessableDictionary(ev.target.value as Dictionary);
+                  }
+                }}>
+                <option value='wordle_guessable'>Wordle Guesses</option>
+                <option value='wordle_answers'>Wordle Answers</option>
+                <option value='medium'>Medium Dictionary</option>
+                <option value='huge'>Huge Dictionary</option>
+              </select>
+            </label>
+          </div>
+
+          <div>
+            <label>
+              Word length:{" "}
               <input
                 type='number'
                 value={wordLength}
@@ -245,17 +284,23 @@ export function Game() {
                   const value = Number.parseInt(ev.target.value);
                   if (value > 1) {
                     // check if there are enough playable words
-                    if (wordify(dictionary, value).length > 2000) {
+                    if (
+                      CreateDictionary(answerDictionary, value).length > 2000 &&
+                      combineWordLists(
+                        CreateDictionary(answerDictionary, value),
+                        CreateDictionary(guessableDictionary, value)
+                      ).length > 2000
+                    ) {
                       setWordLength(value);
                     }
                   }
                 }}
               />{" "}
-              Word length
             </label>
-          </div> */}
+          </div>
 
-          <div>Playable words: {words.length}</div>
+          <div>Possible answers: {answerWords.length}</div>
+          <div>Playable guesses: {guessableWords.length}</div>
 
           <div>
             <label>
@@ -273,7 +318,7 @@ export function Game() {
             </label>
           </div>
 
-          <div>Difficulty: Medium</div>
+          {/* <div>Difficulty: Medium</div> */}
 
           <button
             style={{
@@ -302,8 +347,8 @@ export function Game() {
       )}
       <TitleBar title='FIND THE WORD' />
       <SimpleGame
-        word={word}
-        words={words}
+        word={answer}
+        words={answerWords}
         guessableWords={guessableWords}
         allowedGuesses={allowedGuesses}
         isComplete={isComplete}
